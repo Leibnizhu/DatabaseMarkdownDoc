@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>概要设计文档生成</title>
+    <!--<link rel="stylesheet" type="text/css" href="/static/bootstrap.css"/>-->
+</head>
+<body style="display: block">
+<select id="dbs"></select>
+<button id="down">下载</button>
+<hr/>
+<textarea id="source" style="width: 100%" rows="20"></textarea>
+<hr/>
+<h2>预览:</h2>
+<xmp>
+</xmp>
+
+<script type="text/javascript" src="/static/jquery.min.js"></script>
+<script type="text/javascript" src="/static/bootstrap.min.js"></script>
+<!--<script type="text/javascript" src="/static/marked.js"></script>-->
+<script type="text/javascript">
+    $.ajax({
+        type: "GET",
+        url: "/db",
+        dataType: "json",
+        success: function (res) {
+            var dbs = res["dbs"];
+            for (var i = 0; i < dbs.length; i++) {
+                $("#dbs").append("<option value=" + dbs[i] + ">" + dbs[i] + "</option>\n")
+            }
+        }
+    });
+    $("#dbs").on("change", function () {
+        $.ajax({
+            type: "GET",
+            url: "/doc/" + $("#dbs").val(),
+            // dataType:"json",
+            success: function (res) {
+                $("#source").val(res);
+                $("xmp")[0].innerHTML = res;
+                var u = "/static/marked.js";
+                var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+                g.type = 'text/javascript';
+                g.async = true;
+                g.defer = true;
+                g.src = u;
+                s.parentNode.insertBefore(g, s);
+            }
+        });
+    });
+    $("#down").on("click", function () {
+        var form = $("<form>");//定义一个form表单
+        form.attr("style", "display:none");
+        form.attr("target", "");
+        form.attr("method", "get");//请求类型
+        form.attr("action", "/doc/" + $("#dbs").val());//请求地址
+        $("body").append(form);//将表单放置在web中
+        form.submit();//表单提交
+    });
+</script>
+</body>
+</html>
