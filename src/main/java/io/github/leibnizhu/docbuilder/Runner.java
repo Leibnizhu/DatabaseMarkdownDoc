@@ -59,7 +59,7 @@ class Runner {
             buffer.append("**表名** : ").append(table.getTableName()).append("  \n");
             buffer.append("**主键** : ").append(table.getKeysStr()).append("  \n");
             buffer.append("**Java类名** : ").append(table.getObjectName()).append("  \n");
-            buffer.append("**表结构** : ").append(table.getComment()).append("  \n\n");
+            buffer.append("**备注** : ").append(table.getComment()).append("  \n\n");
             buffer.append("|列名|类型|必须|说明|\n");
             buffer.append("|:-------|:-------|:-------|:-------|\n");
             List<Column> columns = table.getColumns();
