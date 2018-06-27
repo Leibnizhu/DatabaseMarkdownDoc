@@ -3,19 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <title>概要设计文档生成</title>
+    <link href="https://cdn.bootcss.com/github-markdown-css/2.10.0/github-markdown.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/prism/9000.0.1/themes/prism.css" rel="stylesheet">
+    <style type="text/css">
+        table {
+            border-collapse : collapse;
+            /*margin          : 0 auto;*/
+            text-align      : center;
+        }
+
+        table td, table th {
+            border : 1px solid #cad9ea;
+            color  : #666;
+            height : 30px;
+        }
+
+        table thead th {
+            background-color : #CCE8EB;
+            width            : 100px;
+        }
+
+        table tr:nth-child(odd) {
+            background : #fff;
+        }
+
+        table tr:nth-child(even) {
+            background : #F5FAFA;
+        }
+
+        .editor-wrap {
+            float    : left;
+            width    : 50%;
+            height   : 100%;
+            overflow : auto;
+        }
+
+        .preview-wrap {
+            float    : left;
+            width    : 50%;
+            height   : 100%;
+            overflow : auto;
+            border   : 1px;
+        }
+    </style>
 </head>
 <body style="display: block">
-<select id="dbs"></select>
+<span>选择数据库: </span><select id="dbs"></select>
 <button id="down">下载</button>
 <hr/>
-<textarea id="source" style="width: 100%" rows="20"></textarea>
-<hr/>
-<h2>预览:</h2>
-<xmp>
-</xmp>
+<div class="editor-wrap">
+    <textarea name="source" id="source" style="width: 95%;height: 100%" cols="30" rows="60"></textarea>
+</div>
+<div class="preview-wrap">
+    <div class="markdown-body" id="mark"></div>
+</div>
 
 <script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="text/javascript" src="https://cdn.bootcss.com/prism/9000.0.1/prism.js"></script>
 <script type="text/javascript">
+    // marked
+    var markedRender = new marked.Renderer();
+    marked.setOptions({
+        renderer: markedRender,
+        gfm: true,
+        tables: true,
+        breaks: true,  // '>' 换行，回车换成 <br>
+        pedantic: false,
+        sanitize: true,
+        smartLists: true,
+        smartypants: false
+    });
+
     $.ajax({
         type: "GET",
         url: "/db",
@@ -31,17 +90,12 @@
         $.ajax({
             type: "GET",
             url: "/doc/" + $("#dbs").val(),
-            // dataType:"json",
             success: function (res) {
                 $("#source").val(res);
-                $("xmp")[0].innerHTML = res;
-                var u = "/static/marked.js";
-                var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
-                g.type = 'text/javascript';
-                g.async = true;
-                g.defer = true;
-                g.src = u;
-                s.parentNode.insertBefore(g, s);
+                $("#mark").html(marked(res));
+                $("#mark pre code").each(function (i, block) {
+                    Prism.highlightElement(block);
+                });
             }
         });
     });

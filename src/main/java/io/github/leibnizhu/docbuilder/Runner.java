@@ -47,7 +47,7 @@ class Runner {
         buffer.append("xxx-概要设计文档\n\n" +
                 "| 版本号 | 作者 | 日期 | 备注 |\n" +
                 "|-----|-----|---|-----|\n" +
-                "| V0.1 | xxx | \n\n")
+                "| V0.1 | xxx | ")
                 .append(new SimpleDateFormat("yyyy-MM-dd").format(new Date()))
                 .append(" | 初稿 |\n---\n\n")
         .append("# 1. 简介  \n\n# 2. 模块设计说明  \n\n# 3. MySQL数据库表结构  \n");
