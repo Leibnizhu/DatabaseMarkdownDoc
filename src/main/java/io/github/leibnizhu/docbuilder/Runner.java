@@ -1,6 +1,12 @@
 package io.github.leibnizhu.docbuilder;
 
-import java.sql.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,14 +15,15 @@ import java.util.List;
 /**
  * 读取mysql数据库下表的结构信息
  */
-public class Runner {
+class Runner {
+    private Logger log = LoggerFactory.getLogger(getClass());
     private String database;
 
-    public Runner(String database) {
+    Runner(String database) {
         this.database = database;
     }
 
-    public String buildDocument() {
+    String buildDocument() {
         try {
             // 获取数据库下的所有表名称
             List<Table> tables = getAllTableName();
@@ -24,10 +31,9 @@ public class Runner {
             buildTableComment(tables);
             // 获得表中所有字段信息
             buildColumns(tables);
-            conn.close();
             // 写文件
             return buildString(tables);
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return "";
@@ -38,16 +44,16 @@ public class Runner {
      */
     private String buildString(List<Table> tables) {
         StringBuilder buffer = new StringBuilder();
-        buffer.append("***-概要设计文档\n\n" +
+        buffer.append("xxx-概要设计文档\n\n" +
                 "| 版本号 | 作者 | 日期 | 备注 |\n" +
                 "|-----|-----|---|-----|\n" +
-                "| V0.1 | *** | \n\n")
+                "| V0.1 | xxx | \n\n")
                 .append(new SimpleDateFormat("yyyy-MM-dd").format(new Date()))
                 .append(" | 初稿 |\n---\n\n")
         .append("# 1. 简介  \n\n# 2. 模块设计说明  \n\n# 3. MySQL数据库表结构  \n");
         int i = 1;
         for (Table table : tables) {
-            System.out.println(table.getTableName());
+            log.debug("正在生成{}表的文档...", table.getTableName());
             buffer.append("## 3.").append(i++).append(" ")
                     .append(table.getComment()==null || table.getComment().isEmpty()? table.getTableName():table.getComment()).append("  \n");
             buffer.append("**表名** : ").append(table.getTableName()).append("  \n");
@@ -70,28 +76,14 @@ public class Runner {
         return buffer.toString();
     }
 
-    private Connection conn;
-    /**
-     * 连接数据库
-     */
-    //FIXME 地址\用户名\密码改到配置文件中
-    //FIXME 统一数据库连接管理(和MainVerticle类统一)
-    private Connection getMySQLConnection() throws ClassNotFoundException, SQLException {
-        if(conn == null || conn.isClosed()) {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + this.database+"?useUnicode=true&characterEncoding=UTF-8&useSSL=false", "root", "root");
-        }
-        return conn;
-    }
-
     /**
      * 获取当前数据库下的所有表名称
      */
-    private List<Table> getAllTableName() throws SQLException, ClassNotFoundException {
+    private List<Table> getAllTableName() throws SQLException {
         List<Table> tables = new ArrayList<>();
-        Connection conn = getMySQLConnection();
+        Connection conn = ConnectionManager.getInstance().getConnection();
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SHOW TABLES");
+        ResultSet rs = stmt.executeQuery("SELECT TABLE_NAME FROM information_schema.TABLES WHERE table_schema = '" + this.database + "'");
         while (rs.next()) {
             String tableName = rs.getString(1);
             String objectName = camelCase(tableName);
@@ -106,11 +98,11 @@ public class Runner {
     /**
      * 获得某表的建表语句
      */
-    private void buildTableComment(List<Table> tables) throws SQLException, ClassNotFoundException {
-        Connection conn = getMySQLConnection();
+    private void buildTableComment(List<Table> tables) throws SQLException {
+        Connection conn = ConnectionManager.getInstance().getConnection();
         Statement stmt = conn.createStatement();
         for (Table table : tables) {
-            ResultSet rs = stmt.executeQuery("SHOW CREATE TABLE " + table.getTableName());
+            ResultSet rs = stmt.executeQuery("SHOW CREATE TABLE " + this.database + "." + table.getTableName());
             if (rs != null && rs.next()) {
                 String createDDL = rs.getString(2);
                 String comment = parse(createDDL);
@@ -125,12 +117,12 @@ public class Runner {
     /**
      * 获得某表中所有字段信息
      */
-    private void buildColumns(List<Table> tables) throws SQLException, ClassNotFoundException {
-        Connection conn = getMySQLConnection();
+    private void buildColumns(List<Table> tables) throws SQLException {
+        Connection conn = ConnectionManager.getInstance().getConnection();
         Statement stmt = conn.createStatement();
         for (Table table : tables) {
             List<Column> columns = new ArrayList<>();
-            ResultSet rs = stmt.executeQuery("show full columns from " + table.getTableName());
+            ResultSet rs = stmt.executeQuery("show full columns from " + this.database + "." + table.getTableName());
             if (rs != null) {
                 while (rs.next()) {
                     String field = rs.getString("Field");

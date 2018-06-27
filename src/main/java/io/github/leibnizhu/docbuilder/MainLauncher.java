@@ -15,7 +15,7 @@ public class MainLauncher extends Launcher{
         DefaultChannelId.newInstance();
         System.setProperty("vertx.logger-delegate-factory-class-name",
                 "io.vertx.core.logging.SLF4JLogDelegateFactory");
-        String[] runVerticle = {"run", "io.github.leibnizhu.docbuilder.MainVerticle"};
+        String[] runVerticle = {"run", "io.github.leibnizhu.docbuilder.MainVerticle","-conf",args[0]};
         new Launcher().dispatch(runVerticle);
     }
 }

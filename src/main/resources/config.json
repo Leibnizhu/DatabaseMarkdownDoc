@@ -1,0 +1,7 @@
+{
+  "jdbcUrl": "jdbc:mysql://127.0.0.1:3306/?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false",
+  "jdbcUser": "root",
+  "jdbcPassword": "root",
+  "jdbcDriver": "com.mysql.jdbc.Driver",
+  "serverPort": 8233
+}

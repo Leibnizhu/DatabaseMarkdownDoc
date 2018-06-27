@@ -136,3 +136,4 @@ local.properties
 
 target/
 .classpath
+.vertx/

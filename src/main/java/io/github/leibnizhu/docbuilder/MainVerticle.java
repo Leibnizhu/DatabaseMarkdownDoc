@@ -40,7 +40,7 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void stop() throws Exception {
-        conn.close();
+        ConnectionManager.close();
         super.stop();
     }
 
@@ -48,6 +48,8 @@ public class MainVerticle extends AbstractVerticle {
      * 初始化工具类/组件
      */
     private void initComponents() {
+        Constants.init(context);
+        ConnectionManager.init();
         this.mainRouter = Router.router(vertx);
         this.server = vertx.createHttpServer();
     }
@@ -76,23 +78,9 @@ public class MainVerticle extends AbstractVerticle {
         }
     }
 
-    private Connection conn;
-    /**
-     * 连接数据库
-     */
-    //FIXME 地址\用户名\密码改到配置文件中
-    //FIXME 统一数据库连接管理(和Runner类统一)
-    private Connection getMySQLConnection() throws ClassNotFoundException, SQLException {
-        if(conn == null || conn.isClosed()) {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/?useUnicode=true&characterEncoding=UTF-8&useSSL=false", "root", "root");
-        }
-        return conn;
-    }
-
     private void getDatabases(RoutingContext rc) {
         try {
-            Connection conn = getMySQLConnection();
+            Connection conn = ConnectionManager.getInstance().getConnection();
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SHOW DATABASES");
             List<String> dbs = new ArrayList<>();
@@ -103,7 +91,7 @@ public class MainVerticle extends AbstractVerticle {
             stmt.close();
             JsonObject resp = new JsonObject().put("dbs", dbs);
             rc.response().end(resp.toString());
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
